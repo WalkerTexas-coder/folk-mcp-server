@@ -148,14 +148,16 @@ server.tool(
 
 server.tool(
   "list_companies",
-  "List companies in Folk CRM. Supports pagination.",
+  "List companies in Folk CRM. Supports pagination and filtering by region or custom fields.",
   {
     limit: z.string().optional().describe("Items per page (1-100, default 20)"),
     cursor: z.string().optional().describe("Pagination cursor from previous response"),
+    groupId: z.string().optional().describe("Group ID for custom field filtering (e.g. grp_...). Required when using region filter."),
+    region: z.string().optional().describe("Filter by Region custom field (e.g. 'Austin', 'Chicago Area'). Requires groupId."),
   },
-  async ({ limit, cursor }) => {
+  async ({ limit, cursor, groupId, region }) => {
     try {
-      const result = await folk.listCompanies({ limit, cursor });
+      const result = await folk.listCompanies({ limit, cursor, groupId, region });
       return ok(result);
     } catch (e) {
       return err(e);
@@ -223,6 +225,7 @@ server.tool(
     addresses: z.array(z.string()).optional(),
     urls: z.array(z.string()).optional(),
     groups: z.array(z.object({ id: z.string() })).optional(),
+    customFieldValues: z.record(z.record(z.unknown())).optional().describe("Custom field values keyed by group ID, e.g. { 'grp_...': { 'Region': 'Austin' } }"),
   },
   async ({ companyId, ...fields }) => {
     try {

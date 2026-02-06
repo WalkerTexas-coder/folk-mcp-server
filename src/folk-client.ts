@@ -77,10 +77,29 @@ export class FolkClient {
 
   // --- Companies ---
 
-  async listCompanies(params?: { limit?: string; cursor?: string }) {
+  async listCompanies(params?: {
+    limit?: string;
+    cursor?: string;
+    groupId?: string;
+    region?: string;
+    customFilters?: Array<{ groupId: string; field: string; operator: string; value: string }>;
+  }) {
     const queryParams: Record<string, string> = {};
     if (params?.limit) queryParams.limit = params.limit;
     if (params?.cursor) queryParams.cursor = params.cursor;
+
+    // Convenience: region filter (requires groupId)
+    if (params?.region && params?.groupId) {
+      queryParams[`filter[customFieldValues.${params.groupId}.Region][eq]`] = params.region;
+    }
+
+    // General custom field filters
+    if (params?.customFilters) {
+      for (const f of params.customFilters) {
+        queryParams[`filter[customFieldValues.${f.groupId}.${f.field}][${f.operator}]`] = f.value;
+      }
+    }
+
     return this.request("GET", "/v1/companies", undefined, queryParams);
   }
 
